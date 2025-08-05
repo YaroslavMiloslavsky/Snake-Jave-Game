@@ -5,7 +5,7 @@
 ## Controls
 - w, a, s, d
 - arrow keys
-- shift to accelerate
+- Q and SPACE, try it
 ## How to play?
 Have fun, this game is riddled with bugs and funny moments, play with the source code
 <br>

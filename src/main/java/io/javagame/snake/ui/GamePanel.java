@@ -31,29 +31,36 @@ public class GamePanel extends JPanel implements UI, KeyListener {
     private int howManyFrames = 0;
     private float calculatedFPS = 0;
 
-    private final Snake snake;
-    private final List<Food> foods;
-    private final List<Food> removeFoods;
+    private Snake snake;
+    private List<Food> foods;
+    private List<Food> removeFoods;
 
-    private final Random random;
+    private static final int SIZE = 15;
+
+    private Random random;
 
     private static float DEF_SPEED = 0.1f;
     private int score;
     private boolean isGameOver;
 
+    private boolean isShowFPS;
+
     public GamePanel() {
+        isShowFPS = false;
+        init();
+    }
+
+    private void init() {
         random = Random.from(RandomGenerator.getDefault());
         score = 0;
         isGameOver = false;
-
         this.setBackground(Color.GRAY);
-        int delay = (int) (DELAY / 1_000_000L);
 
         snake = Snake.getInstance();
         snake.addCoordinate(new Point(dimension.width / 2, dimension.height / 2));
         foods = new ArrayList<>();
         removeFoods = new LinkedList<>();
-
+        int delay = (int) (DELAY / 1_000_000L);
         final var timer = new Timer(delay - 1, event -> {
             updateGame();
             this.repaint();
@@ -70,19 +77,17 @@ public class GamePanel extends JPanel implements UI, KeyListener {
     private boolean isCollide(Food food) {
         // Get the coordinates and size of the snake's head
         final var snakeHead = snake.getHead();
-        final var snakeSize = snake.getSize();
 
         // Get the coordinates and size of the food
         final var foodPoint = food.point();
-        final var foodSize = food.size();
 
         // Check for horizontal overlap
-        boolean xOverlap = (snakeHead.x < foodPoint.x + foodSize) &&
-                (snakeHead.x + snakeSize > foodPoint.x);
+        boolean xOverlap = (snakeHead.x < foodPoint.x + SIZE) &&
+                (snakeHead.x + SIZE > foodPoint.x);
 
         // Check for vertical overlap
-        boolean yOverlap = (snakeHead.y < foodPoint.y + foodSize) &&
-                (snakeHead.y + snakeSize > foodPoint.y);
+        boolean yOverlap = (snakeHead.y < foodPoint.y + SIZE) &&
+                (snakeHead.y + SIZE > foodPoint.y);
 
         // A collision occurs if there is overlap on both axes
         return xOverlap && yOverlap;
@@ -110,7 +115,7 @@ public class GamePanel extends JPanel implements UI, KeyListener {
         removeFoods.clear();
 
         var newHead = new Point(snake.getHead().x, snake.getHead().y);
-        final int movementVector = (int) (snake.getSize() * snake.getSpeed());
+        final int movementVector = (int) (SIZE * snake.getSpeed());
 
         switch (snake.getDirection()) {
             case UP -> newHead.y -= movementVector;
@@ -121,7 +126,7 @@ public class GamePanel extends JPanel implements UI, KeyListener {
             }
         }
 
-        boolean isHitWall = newHead.x > (dimension.width - snake.getSize()) || newHead.x < 0 || newHead.y > dimension.height - snake.getSize() || newHead.y < 0;
+        boolean isHitWall = newHead.x > (dimension.width - SIZE) || newHead.x < 0 || newHead.y > dimension.height - SIZE || newHead.y < 0;
         boolean isHitSelf = false;
         if (snake.getCoordinates().size() > 1)
             for (final var coordinate : snake.getCoordinates().subList(1, snake.getCoordinates().size() - 1)) {
@@ -161,15 +166,16 @@ public class GamePanel extends JPanel implements UI, KeyListener {
             graphics.drawString(String.format("FPS: %.0f", calculatedFPS), 10, 20);
             graphics.setColor(Color.BLACK);
             for (final var coordinate : snake.getCoordinates()) {
-                graphics.fillRect(coordinate.x, coordinate.y, snake.getSize(), snake.getSize());
+                graphics.fillRect(coordinate.x, coordinate.y, SIZE, SIZE);
             }
             graphics.setColor(Color.RED);
             for (final var food : foods) {
-                graphics.fillRect(food.point().x, food.point().y, food.size(), food.size());
+                graphics.fillRect(food.point().x, food.point().y, SIZE, SIZE);
             }
         } else {
             graphics.setColor(Color.RED);
             graphics.drawString("Game Over, Score: " + score, (int) (dimension.getWidth() / 2) - 100, (int) (dimension.getHeight() / 2));
+            graphics.drawString("Press SPACE to try again :)", (int) (dimension.getWidth() / 2) - 100, (int) (dimension.getHeight() / 2) - 100);
         }
     }
 
@@ -188,16 +194,26 @@ public class GamePanel extends JPanel implements UI, KeyListener {
             snake.setDirection(Direction.LEFT);
         } else if (KeyEvent.VK_RIGHT == pressed || KeyEvent.VK_D == pressed) {
             snake.setDirection(Direction.RIGHT);
-        } else if (KeyEvent.VK_SHIFT == pressed) {
-            snake.setSpeed(DEF_SPEED * 2);
+        } else if (KeyEvent.VK_SPACE == pressed) {
+            if (isGameOver) {
+                log.info("Again!");
+                isGameOver = false;
+                snake.getCoordinates().clear();
+                foods.clear();
+                DEF_SPEED = 0.1f;
+                snake.setSpeed(DEF_SPEED);
+                init();
+            } else {
+                if (snake.getSpeed() + 0.2f < 1 && snake.getSpeed() + 0.2f < DEF_SPEED + 0.5f)
+                    snake.setSpeed(snake.getSpeed() + 0.2f);
+            }
+        } else if (KeyEvent.VK_Q == pressed) {
+            if (snake.getSpeed() - 0.2f > DEF_SPEED)
+                snake.setSpeed(snake.getSpeed() - 0.2f);
         }
     }
 
     @Override
     public void keyReleased(KeyEvent e) {
-        final var released = e.getKeyCode();
-        if (KeyEvent.VK_SHIFT == released) {
-            snake.setSpeed(DEF_SPEED);
-        }
     }
 }

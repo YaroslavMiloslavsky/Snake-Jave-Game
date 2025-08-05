@@ -8,7 +8,6 @@ public class Snake {
     private static Snake INSTANCE = null;
 
     private final List<Point> coordinates;
-    private final int size;
     private Direction direction;
     private float speed;
 
@@ -22,7 +21,6 @@ public class Snake {
     private Snake() {
         // For fast first and last removal
         coordinates = new LinkedList<>();
-        size = 15;
         direction = Direction.UP;
         speed = 0.1f;
     }
@@ -37,10 +35,6 @@ public class Snake {
 
     public List<Point> getCoordinates() {
         return this.coordinates;
-    }
-
-    public int getSize() {
-        return this.size;
     }
 
     public Direction getDirection() {
